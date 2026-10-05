@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Free positive NSE/BSE stock news alerts from ET, Mint, BS, NSE & BSE." />
+  <meta name="theme-color" content="#0f1419" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>NSE/BSE Positive News Alerts</title>
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22NSE/BSE%20Alerts%22,%22short_name%22:%22Stock%20Alerts%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230f1419%22,%22theme_color%22:%22%230f1419%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>%22,%22sizes%22:%22any%22,%22type%22:%22image/svg+xml%22}]}" />
+  <style>
+    :root {
+      --bg: #0f1419; --card: #1a2332; --border: #2d3a4f; --text: #e7ecf3;
+      --muted: #8b9bb4; --green: #22c55e; --green-dim: #16a34a;
+      --accent: #3b82f6; --danger: #ef4444; --mark: #fbbf24; --yellow: #eab308;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5;
+    }
+    body.compact .card { padding: 0.55rem 0.85rem; }
+    body.compact .card-desc { display: none; }
+    body.compact .card-title { font-size: 0.88rem; }
+    header {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.15rem; position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    .header-inner {
+      max-width: 1040px; margin: 0 auto;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem;
+    }
+    h1 { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 0.35rem; }
+    h1 span { color: var(--green); }
+    .status { display: flex; align-items: center; gap: 0.45rem; font-size: 0.78rem; color: var(--muted); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
+    .dot.live { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+    .dot.error { background: var(--danger); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .market-banner {
+      max-width: 1040px; margin: 0.6rem auto 0; padding: 0.35rem 0.85rem;
+      border-radius: 8px; font-size: 0.75rem; text-align: center;
+    }
+    .market-banner.open { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+    .market-banner.closed { background: rgba(139,155,180,.1); color: var(--muted); border: 1px solid var(--border); }
+    main { max-width: 1040px; margin: 0 auto; padding: 0.9rem 1.15rem 3rem; }
+    .panel {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 0.8rem 0.95rem; margin-bottom: 0.75rem;
+    }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
+    button, select, input, textarea {
+      background: var(--bg); color: var(--text); border: 1px solid var(--border);
+      padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.8rem;
+      transition: border-color .15s, background .15s;
+    }
+    button { cursor: pointer; }
+    button:hover { border-color: var(--accent); background: #243044; }
+    button.primary { background: var(--green-dim); border-color: var(--green); color: #fff; }
+    button.primary:hover { background: var(--green); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.active { border-color: var(--green); color: var(--green); }
+    input[type="search"], input[type="text"] { min-width: 130px; flex: 1; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    .row2 { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.5rem; align-items: center; }
+    .sources { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .src-chip {
+      font-size: 0.7rem; padding: 0.18rem 0.5rem; border-radius: 999px;
+      border: 1px solid var(--border); cursor: pointer; user-select: none;
+      background: var(--bg); color: var(--muted);
+    }
+    .src-chip.on { background: rgba(34,197,94,.15); border-color: var(--green); color: var(--green); }
+    .src-chip.fail { opacity: .5; text-decoration: line-through; }
+    .watch-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+    .tag {
+      background: rgba(59,130,246,.15); color: var(--accent);
+      border: 1px solid rgba(59,130,246,.35); padding: 0.12rem 0.45rem;
+      border-radius: 999px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.25rem;
+    }
+    .tag button { background: none; border: none; color: var(--accent); padding: 0; font-size: 0.85rem; line-height: 1; }
+    .info-bar {
+      display: flex; flex-wrap: wrap; gap: 0.55rem; justify-content: space-between;
+      align-items: center; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.75rem;
+    }
+    .stats { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .stat-pill {
+      font-size: 0.68rem; padding: 0.12rem 0.4rem; border-radius: 6px;
+      background: rgba(59,130,246,.1); color: var(--accent); border: 1px solid rgba(59,130,246,.2);
+    }
+    #news-list { display: flex; flex-direction: column; gap: 0.65rem; }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 0.85rem 1rem; transition: border-color .2s, transform .12s; animation: fadeIn .25s ease;
+    }
+    .card:hover { border-color: var(--green); transform: translateY(-1px); }
+    .card.new { border-left: 3px solid var(--green); }
+    .card.fav { border-left: 3px solid var(--yellow); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .card-title { font-size: 0.93rem; font-weight: 600; line-height: 1.4; margin-bottom: 0.2rem; }
+    .card-title a { color: var(--text); text-decoration: none; }
+    .card-title a:hover { color: var(--green); text-decoration: underline; }
+    .card-title mark { background: rgba(251,191,36,.25); color: var(--mark); padding: 0 2px; border-radius: 2px; }
+    .card-desc {
+      font-size: 0.78rem; color: var(--muted); margin: 0.25rem 0 0.4rem;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .card-meta { display: flex; flex-wrap: wrap; gap: 0.45rem; font-size: 0.72rem; color: var(--muted); align-items: center; }
+    .badge {
+      background: rgba(34,197,94,.15); color: var(--green);
+      padding: 0.08rem 0.38rem; border-radius: 999px; font-size: 0.68rem; font-weight: 600;
+    }
+    .badge.watch { background: rgba(59,130,246,.15); color: var(--accent); }
+    .badge.fav-b { background: rgba(234,179,8,.15); color: var(--yellow); }
+    .card-actions { margin-left: auto; display: flex; gap: 0.25rem; }
+    .card-actions button { padding: 0.15rem 0.45rem; font-size: 0.68rem; background: transparent; }
+    .empty { text-align: center; padding: 2rem 1rem; color: var(--muted); }
+    .empty h2 { color: var(--text); font-size: 1.02rem; margin-bottom: 0.3rem; }
+    footer { text-align: center; padding: 1rem; color: var(--muted); font-size: 0.72rem; }
+    .toast {
+      position: fixed; bottom: 1.2rem; right: 1.2rem; background: var(--card);
+      border: 1px solid var(--green); color: var(--text); padding: 0.7rem 1rem;
+      border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.45); z-index: 100;
+      max-width: 300px; font-size: 0.82rem; display: none; animation: slideUp .25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .skeleton {
+      height: 72px; background: linear-gradient(90deg, var(--card) 25%, #243044 50%, var(--card) 75%);
+      background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 12px; border: 1px solid var(--border);
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    details.adv { margin-top: 0.45rem; font-size: 0.78rem; color: var(--muted); }
+    details.adv summary { cursor: pointer; color: var(--accent); user-select: none; }
+    details.adv textarea {
+      width: 100%; margin-top: 0.35rem; min-height: 48px; resize: vertical; font-family: inherit;
+    }
+    .fab {
+      position: fixed; bottom: 1.2rem; left: 1.2rem; width: 42px; height: 42px;
+      border-radius: 50%; background: var(--card); border: 1px solid var(--border);
+      color: var(--text); font-size: 1.1rem; cursor: pointer; z-index: 40;
+      box-shadow: 0 4px 14px rgba(0,0,0,.35); display: none; align-items: center; justify-content: center;
+    }
+    .fab.show { display: flex; }
+    .fab:hover { border-color: var(--accent); }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.02rem; }
+      main { padding: 0.75rem; }
+    }
+    
+    body.focus-mode .panel { display: none; }
+    body.focus-mode .info-bar { display: none; }
+    body.focus-mode header h1 { font-size: 1rem; }
+    .card-desc.expanded {
+      -webkit-line-clamp: unset; display: block; max-height: none; cursor: pointer;
+    }
+    .card-desc { cursor: pointer; }
+    .quick-filters { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.45rem; }
+    .qchip {
+      font-size: 0.68rem; padding: 0.15rem 0.45rem; border-radius: 999px;
+      border: 1px solid var(--border); cursor: pointer; background: var(--bg); color: var(--muted);
+    }
+    .qchip.on { background: rgba(234,179,8,.15); border-color: var(--yellow); color: var(--yellow); }
+    body.fs-sm { font-size: 14px; }
+    body.fs-lg { font-size: 17px; }
+    body.fs-xl { font-size: 18px; }
+    .snooze-active { border-color: var(--yellow) !important; color: var(--yellow) !important; }
+
+    @media print {
+      header, .panel, .info-bar, footer, .fab, .toast, .card-actions { display: none !important; }
+      body { background: #fff; color: #000; }
+      .card { border: 1px solid #ccc; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>📈 <span>NSE/BSE</span> Positive News Alerts</h1>
+      <div class="status">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">Idle</span>
+        <span id="last-update"></span>
+        <span id="next-refresh"></span>
+      </div>
+    </div>
+    <div class="market-banner closed" id="market-banner">Checking market hours…</div>
+  </header>
+
+  <main>
+    <div class="panel">
+      <div class="controls">
+        <button class="primary" id="btn-refresh" title="R">Refresh</button>
+        <button id="btn-allnews" class="active" title="Show all market news">All news</button>
+        <button id="btn-notify">Notify</button>
+        <button id="btn-sound">Sound Off</button>
+        <button id="btn-ipo">IPOs</button>
+        <button id="btn-whale" title="Bulk/block deals, FII/DII, stake sales">Whales</button>
+        <button id="btn-xsearch" title="Search on X">X Search</button>
+        <button id="btn-newonly">New only</button>
+        <button id="btn-compact">Compact</button>
+        <button id="btn-export">Export ▾</button>
+        <button id="btn-clear">Clear Seen</button>
+        <label style="font-size:0.78rem;color:var(--muted);display:flex;align-items:center;gap:0.25rem;">
+          Auto
+          <select id="interval">
+            <option value="0">Off</option>
+            <option value="0.5">30 sec</option>
+            <option value="1">1 min</option>
+            <option value="3" selected>3 min</option>
+            <option value="5">5 min</option>
+            <option value="10">10 min</option>
+          </select>
+        </label>
+        <label style="font-size:0.78rem;color:var(--muted);display:flex;align-items:center;gap:0.25rem;">
+          Time
+          <select id="time-range">
+            <option value="0">All</option>
+            <option value="1">Last 1h</option>
+            <option value="6">Last 6h</option>
+            <option value="24" selected>Last 24h</option>
+            <option value="72">Last 3d</option>
+          </select>
+        </label>
+        <label style="font-size:0.78rem;color:var(--muted);display:flex;align-items:center;gap:0.25rem;">
+          Sort
+          <select id="sort-by">
+            <option value="newest" selected>Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="source">By source</option>
+          </select>
+        </label>
+        <input type="search" id="search" placeholder="Search…" />
+        <button id="btn-focus" title="Hide controls">Focus</button>
+        <button id="btn-fontsize" title="Font size">A+</button>
+        <button id="btn-snooze" title="Snooze alerts">Snooze</button>
+        <button id="btn-opennew" title="Open all new links">Open new</button>
+      </div>
+      <div class="quick-filters" id="quick-filters"></div>
+
+      <div class="row2">
+        <span style="font-size:0.75rem;color:var(--muted);">Sources:</span>
+        <div class="sources" id="source-chips"></div>
+      </div>
+
+      <div class="row2">
+        <input type="text" id="watch-input" placeholder="Add stock: Reliance, INFY, TCS (press Enter)" style="max-width:260px;" />
+        <button id="btn-watch-add">+ Watch</button>
+        <button id="btn-settings-exp" title="Export settings">⚙ Export</button>
+        <button id="btn-settings-imp" title="Import settings">⚙ Import</button>
+        <input type="file" id="import-file" accept="application/json" style="display:none;" />
+      </div>
+      <div class="watch-tags" id="watch-tags"></div>
+
+      <details class="adv">
+        <summary>Advanced · custom positive keywords · favorites</summary>
+        <textarea id="custom-pos" placeholder="Extra positive words, comma-separated (buyback, award, preferential…)"></textarea>
+        <div style="margin-top:0.3rem;display:flex;gap:0.4rem;flex-wrap:wrap;">
+          <button id="btn-save-kw">Save keywords</button>
+          <button id="btn-show-favs">Show favorites only</button>
+          <button id="btn-clear-favs">Clear favorites</button>
+          <span style="font-size:0.72rem;color:var(--muted);">R = refresh · / = search · Star items to favorite</span>
+        </div>
+      </details>
+    </div>
+
+    <div class="info-bar">
+      <span id="count-label">0 items</span>
+      <div class="stats" id="stats"></div>
+      <span id="cache-label"></span>
+    </div>
+
+    <div id="news-list">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  </main>
+
+  <button class="fab" id="fab-top" title="Scroll to top">↑</button>
+  <footer>
+    Free · static · GitHub Pages · ET + ET Stocks + Mint + BS + BusinessLine + NSE + BSE + IPO + Google News<br>
+    X has no free public RSS — use <b>X Search</b> for live posts.<br>
+    Default: All news (toggle for positive-only). Not financial advice.
+  </footer>
+  <div class="toast" id="toast"></div>
+
+  <script>
+  (function () {
+    const FEEDS = [
+      { id: "et", name: "Economic Times", url: "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms" },
+      { id: "etstocks", name: "ET Stocks", url: "https://economictimes.indiatimes.com/markets/stocks/rssfeeds/2146842.cms" },
+      { id: "mint", name: "LiveMint", url: "https://www.livemint.com/rss/markets" },
+      { id: "bs", name: "Business Standard", url: "https://www.business-standard.com/rss/markets-106.rss" },
+      { id: "bl", name: "BusinessLine", url: "https://www.thehindubusinessline.com/markets/feeder/default.rss" },
+      { id: "nse", name: "NSE", url: "https://nsearchives.nseindia.com/content/RSS/Online_announcements.xml" },
+      { id: "bse", name: "BSE", url: "https://www.bseindia.com/data/xml/announcements.xml" },
+      { id: "ipo", name: "IPO (ET)", url: "https://economictimes.indiatimes.com/markets/ipos/fpos/rssfeeds/14655708.cms" },
+      { id: "gnews", name: "Google News", url: "https://news.google.com/rss/search?q=NSE+OR+BSE+OR+Nifty+OR+Sensex+when:1d&hl=en-IN&gl=IN&ceid=IN:en" },
+      { id: "gnewsipo", name: "GN IPO", url: "https://news.google.com/rss/search?q=IPO+India+OR+%22initial+public+offering%22+when:7d&hl=en-IN&gl=IN&ceid=IN:en" }
+    ];
+
+    const IPO_KEYWORDS = [
+      "ipo", "fpo", "listing", "issue price", "subscription", "grey market", "gmp",
+      "draft papers", "drhp", "rhp", "allotment", "anchor investors", "public issue",
+      "opens today", "ipo opens", "ipo closes", "oversubscribed", "listing gains"
+    ];
+
+    const WHALE_KEYWORDS = [
+      "bulk deal","block deal","bulk deals","block deals","bulk/block","bulk block",
+      "fii","diis","dii","fii buying","fii selling","dii buying","dii selling",
+      "foreign institutional","domestic institutional","fpis","fpi ",
+      "stake sale","stake buy","stake purchase","acquires stake","picks stake",
+      "sells stake","offloads stake","raises stake","cuts stake","hiked stake",
+      "preferential allotment","preferential issue","qiib","qip ",
+      "open market purchase","open market buy","bought shares","sold shares",
+      "promoter buying","promoter selling","promoter pledge","pledged shares",
+      "insider trading","insider buy","insider purchase",
+      "substantial acquisition","sast","encumbrance","creation of pledge",
+      "institutional investor","mutual fund bought","mutual fund sold","mf bought","mf sold",
+      "offloaded","picked up stake","picked stake","creeping acquisition",
+      "tender offer","open offer","takeover","sebi open offer",
+      "warburg","blackstone","softbank","temasek","gqg","morgan stanley bought",
+      "goldman bought","citadel","renaissance"
+    ];
+
+    const DEFAULT_POS = [
+      // price / circuit
+      "surge","surges","surged","surging","rally","rallies","rallied","rallying",
+      "soar","soars","soared","soaring","jump","jumps","jumped","jumping",
+      "spike","spikes","spiked","zoom","zooms","zoomed","zooming",
+      "gain","gains","gained","gaining","rise","rises","rose","rising",
+      "climb","climbs","climbed","climbing","advance","advances","advanced",
+      "rebound","rebounds","rebounded","recovery","recovers","recovered",
+      "breakout","breaks out","broke out","hit high","hits high","hitting high",
+      "fresh high","new high","52-week high","52 week high","all-time high","all time high",
+      "record high","lifetime high","ath ","yearly high","multi-year high",
+      "upper circuit","upper circuits","hit circuit","hits circuit","hitting circuit",
+      "locked upper","locked in upper","circuit filter","circuit to circuit",
+      "uc ","high of day","hod ","intraday high","gap up","gapped up","opens higher",
+      "closes higher","ends higher","settles higher","trades higher","trading higher",
+      "up %","percent up","pct up","% up","green ","in the green",
+      // results
+      "profit","profits","profitable","pat ","ebitda","net profit","bottom line",
+      "beats","beat estimates","beats estimates","top estimates","tops estimates",
+      "strong numbers","robust numbers","solid numbers","inline","in-line","in line",
+      "ahead of estimates","above estimates","better than expected","exceeds estimates",
+      "record profit","highest profit","profit jumps","profit surges","profit rises",
+      // orders / business wins — Indian media slang
+      "order","orders","order win","order wins","order book","orderbook","order-book",
+      "bags","bagged","bagging","secures","secured","securing",
+      "wins","won","winning","clinches","clinched","clinching",
+      "snags","snagged","lands","landed","grabs","grabbed",
+      "receives order","received order","receives orders","received orders",
+      "gets order","got order","gets orders","got orders","gets contract","got contract",
+      "new order","new orders","fresh order","fresh orders","major order","big order",
+      "order worth","orders worth","crore order","crore orders","cr order","cr orders",
+      "rs order","rs. order","inr order","worth rs","worth inr",
+      "work order","purchase order","po worth","loi","letter of intent",
+      "letter of award","loa","loa from","contract","contracts",
+      "contract worth","contracts worth","contract win","contract wins",
+      "bags order","bags orders","bagged order","bagged orders","bagging order",
+      "secures order","secures orders","secured order","secured orders",
+      "wins order","wins orders","won order","won orders","winning order",
+      "awarded","award of","awarded contract","awarded order","awarded project",
+      "mou","mo u","memorandum of understanding","signs mou","signed mou",
+      "ties up","tie-up","tie up","partnership","partners with","strategic partnership",
+      "jv ","joint venture","collaboration","collaborates",
+      "supply order","supply contract","epc order","epc contract","turnkey",
+      "repeat order","repeat orders","follow-on order","follow on order",
+      // corporate actions
+      "dividend","interim dividend","final dividend","special dividend","div ","div.",
+      "bonus","bonus issue","bonus share","bonus shares","stock split","share split","split",
+      "buyback","buy-back","buy back","share buyback",
+      "preferential","preferential issue","preferential allotment","qip","qiib","qi p",
+      "rights issue","rights offers","fundraising","fund raise","fund-raise",
+      "raises funds","raises capital","capital raise","fund infusion",
+      "oversubscribed","over-subscribed","subscribed times","allotment",
+      "listing gains","lists at premium","lists with premium","lists higher","debuts",
+      "grey market","gmp ","konwiz","listing day",
+      // broker / rating slang
+      "upgrade","upgraded","upgrades","buy rating","strong buy","accumulate",
+      "overweight","outperform","outperforms","outperformed",
+      "target raised","raises target","hikes target","price target","pt raised",
+      "initiates coverage","initiate with buy","initiated with buy","reiterates buy",
+      "bullish call","buys on dips","add on dips",
+      // expansion / approvals
+      "expansion","expands","expanding","capacity addition","capacity expansion",
+      "new plant","new facility","new unit","greenfield","brownfield",
+      "approval","approves","approved","clears","cleared","nod from","gets nod",
+      "green signal","green-light","greenlight","licences","license","clearance",
+      "growth","strong demand","demand uptick","upbeat","bullish","positive",
+      "boost","boosts","boosted","momentum","tailwind","tailwinds",
+      // desk / trader slang (India)
+      "in focus","in limelight","in spotlight","stocks in news","stock in news",
+      "buzzing","buzz","making waves","hits the tape","on the tape",
+      "multibagger","multi-bagger","re-rating","rerating","re rating",
+      "short covering","short-covering","cover short","long build","long buildup",
+      "fresh buying","heavy buying","aggressive buying","institutional buying",
+      "operator action","smart money","high delivery","delivery volume",
+      "volume spike","volumes surge","traded value","blockbuster",
+      "outperforms nifty","outperforms sensex","sector leader","top gainer","top gainers",
+      "pack leader","momentum stock","breakout stock","v-shaped","v shaped"
+    ];
+    const NEGATIVE = [
+      "falls sharply","fell sharply","crashes","crashed","plunge","plunges","plunged",
+      "slump","slumps","slumped","lower circuit","locked in lower",
+      "downgrade","downgraded","fraud","scam","probe against","fir against",
+      "insolvency","bankruptcy","defaulted","sebi bans","show-cause",
+      "misses estimates","missed estimates","weak results","disappointing results",
+      "layoff","layoffs","job cuts","lawsuit against"
+    ];
+
+    const KEYS = {
+      seen: "nba_seen_v4", sound: "nba_sound", watch: "nba_watch",
+      sources: "nba_sources", customPos: "nba_custom_pos", cache: "nba_cache",
+      favs: "nba_favs", interval: "nba_interval", compact: "nba_compact",
+      timeRange: "nba_time_range", newOnly: "nba_new_only"
+    };
+    const MAX_ITEMS = 120;
+
+    let seen = new Set(JSON.parse(localStorage.getItem(KEYS.seen) || "[]"));
+    let favs = new Set(JSON.parse(localStorage.getItem(KEYS.favs) || "[]"));
+    let soundOn = localStorage.getItem(KEYS.sound) === "1";
+    let watchlist = JSON.parse(localStorage.getItem(KEYS.watch) || "[]");
+    let enabledSources = JSON.parse(localStorage.getItem(KEYS.sources) || "null") || FEEDS.map(f => f.id);
+    let customPos = (localStorage.getItem(KEYS.customPos) || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    let compact = localStorage.getItem(KEYS.compact) === "1";
+    let newOnly = localStorage.getItem(KEYS.newOnly) === "1";
+    let showFavsOnly = false;
+    let quickFilter = "";
+    let ipoMode = false;
+    let whaleMode = false;
+    let allNewsMode = true;
+    let fontStep = parseInt(localStorage.getItem("nba_font") || "1", 10); // 0 sm, 1 normal, 2 lg, 3 xl
+    let snoozeUntil = parseInt(localStorage.getItem("nba_snooze") || "0", 10);
+    let sortBy = localStorage.getItem("nba_sort") || "newest";
+    let timer = null;
+    let countdownTimer = null;
+    let nextRefreshAt = 0;
+    let allItems = [];
+    let feedOk = {};
+
+    const $ = id => document.getElementById(id);
+    const listEl = $("news-list");
+    const statusDot = $("status-dot");
+    const statusText = $("status-text");
+    const lastUpdate = $("last-update");
+    const nextRefreshEl = $("next-refresh");
+    const countLabel = $("count-label");
+    const cacheLabel = $("cache-label");
+    const statsEl = $("stats");
+    const toast = $("toast");
+    const marketBanner = $("market-banner");
+    const fabTop = $("fab-top");
+
+    function showToast(msg, ms) {
+      ms = ms || 3000;
+      toast.textContent = msg;
+      toast.style.display = "block";
+      clearTimeout(toast._t);
+      toast._t = setTimeout(function () { toast.style.display = "none"; }, ms);
+    }
+
+    function setStatus(state, text) {
+      statusDot.className = "dot" + (state === "live" ? " live" : state === "error" ? " error" : "");
+      statusText.textContent = text;
+    }
+
+    function getPosList() { return DEFAULT_POS.concat(customPos); }
+
+    function isPositive(title, desc) {
+      const raw = (title + " " + (desc || "")).toLowerCase();
+      const t = raw
+        .replace(/\u20b9/g, "rs ")
+        .replace(/₹/g, "rs ")
+        .replace(/,/g, "")
+        .replace(/\s+/g, " ");
+      const hasPos = getPosList().some(function (k) { return k && t.indexOf(k) !== -1; });
+      if (!hasPos) return false;
+      // Strong order/circuit signals: don't let mild negatives kill the hit
+      const strong = [
+        "upper circuit","bags","bagged","secures","secured","order worth","orders worth",
+        "crore order","crore orders","letter of award","letter of intent","wins order",
+        "received order","receives order","all-time high","52-week high","bulk deal","block deal"
+      ].some(function (k) { return t.indexOf(k) !== -1; });
+      if (strong) return true;
+      return !NEGATIVE.some(function (k) { return t.indexOf(k) !== -1; });
+    }
+
+    // Common symbol → name aliases for better matching
+    const SYMBOL_ALIASES = {
+      "reliance": ["reliance", "ril", "reliance industries"],
+      "ril": ["reliance", "ril", "reliance industries"],
+      "tcs": ["tcs", "tata consultancy", "tata consultancy services"],
+      "infy": ["infy", "infosys"],
+      "infosys": ["infy", "infosys"],
+      "hdfcbank": ["hdfc bank", "hdfcbank"],
+      "hdfc": ["hdfc bank", "hdfc"],
+      "icicibank": ["icici bank", "icicibank"],
+      "sbin": ["sbi", "state bank", "sbin"],
+      "sbi": ["sbi", "state bank", "sbin"],
+      "itc": ["itc"],
+      "bhartiartl": ["bharti", "airtel", "bharti airtel"],
+      "airtel": ["bharti", "airtel", "bharti airtel"],
+      "lt": ["larsen", "l&t", "larsen & toubro"],
+      "wipro": ["wipro"],
+      "maruti": ["maruti", "maruti suzuki"],
+      "tatamotors": ["tata motors", "tatamotors"],
+      "tatasteel": ["tata steel", "tatasteel"],
+      "axisbank": ["axis bank", "axisbank"],
+      "kotakbank": ["kotak", "kotak mahindra", "kotakbank"],
+      "bajfinance": ["bajaj finance", "bajfinance"],
+      "asianpaint": ["asian paints", "asianpaint"],
+      "sunpharma": ["sun pharma", "sun pharmaceutical", "sunpharma"],
+      "hcltech": ["hcl", "hcl tech", "hcl technologies"],
+      "adani": ["adani"],
+      "adanient": ["adani enterprises", "adanient", "adani"],
+      "adaniports": ["adani ports", "adaniports", "adani"],
+      "ntpc": ["ntpc"],
+      "ongc": ["ongc"],
+      "powergrid": ["power grid", "powergrid"],
+      "coalindia": ["coal india", "coalindia"],
+      "ultracemco": ["ultratech", "ultracemco"],
+      "titan": ["titan"],
+      "nestleind": ["nestle", "nestleind"],
+      "hindunilvr": ["hul", "hindustan unilever", "hindunilvr"],
+      "hul": ["hul", "hindustan unilever", "hindunilvr"],
+      "marine": ["marine electricals", "marine"],
+      "marineelectricals": ["marine electricals", "marine"]
+    };
+
+    function normalizeText(s) {
+      return (s || "").toLowerCase()
+        .replace(/[^a-z0-9\s&]/g, " ")
+        .replace(/\b(limited|ltd|plc|inc|corp|corporation|industries|india|the)\b/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function watchTermsFor(w) {
+      const key = w.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const terms = [w.toLowerCase()];
+      if (SYMBOL_ALIASES[key]) {
+        SYMBOL_ALIASES[key].forEach(function (a) { terms.push(a); });
+      }
+      // also individual words length >= 3
+      normalizeText(w).split(" ").forEach(function (part) {
+        if (part.length >= 3) terms.push(part);
+      });
+      return terms;
+    }
+
+    function matchesWatch(title, desc) {
+      if (!watchlist.length) return true;
+      const t = normalizeText(title + " " + (desc || ""));
+      const raw = (title + " " + (desc || "")).toLowerCase();
+      return watchlist.some(function (w) {
+        const terms = watchTermsFor(w);
+        return terms.some(function (term) {
+          if (term.length < 2) return false;
+          return raw.indexOf(term) !== -1 || t.indexOf(normalizeText(term)) !== -1;
+        });
+      });
+    }
+
+    function timeAgo(dateStr) {
+      if (!dateStr) return "";
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return "";
+      const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+      if (sec < 60) return "just now";
+      if (sec < 3600) return Math.floor(sec / 60) + "m ago";
+      if (sec < 86400) return Math.floor(sec / 3600) + "h ago";
+      return Math.floor(sec / 86400) + "d ago";
+    }
+
+    function formatIST(dateStr) {
+      try {
+        return new Date(dateStr).toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata", day: "2-digit", month: "short",
+          hour: "2-digit", minute: "2-digit"
+        });
+      } catch (e) { return ""; }
+    }
+
+    function saveSeen() {
+      const arr = Array.from(seen).slice(-600);
+      localStorage.setItem(KEYS.seen, JSON.stringify(arr));
+      seen = new Set(arr);
+    }
+
+    function saveFavs() {
+      localStorage.setItem(KEYS.favs, JSON.stringify(Array.from(favs)));
+    }
+
+    function stripHtml(html) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html || "";
+      return (tmp.textContent || "").replace(/\s+/g, " ").trim();
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    function escapeAttr(s) { return escapeHtml(s).replace(/'/g, "&#39;"); }
+
+    function highlight(text, query) {
+      const safe = escapeHtml(text);
+      if (!query || query.length < 2) return safe;
+      try {
+        const re = new RegExp("(" + query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
+        return safe.replace(re, "<mark>$1</mark>");
+      } catch (e) { return safe; }
+    }
+
+    function playBeep() {
+      if (!soundOn || Date.now() < snoozeUntil) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = 880; g.gain.value = 0.07;
+        o.start();
+        setTimeout(function () { o.stop(); ctx.close(); }, 160);
+      } catch (e) {}
+    }
+
+    // Market hours (NSE/BSE approx 9:15–15:30 IST, Mon–Fri)
+    function updateMarketBanner() {
+      try {
+        const now = new Date();
+        const ist = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+        const day = ist.getDay();
+        const mins = ist.getHours() * 60 + ist.getMinutes();
+        const open = mins >= 9 * 60 + 15 && mins < 15 * 60 + 30;
+        const weekday = day >= 1 && day <= 5;
+        if (weekday && open) {
+          marketBanner.className = "market-banner open";
+          marketBanner.textContent = "🟢 Market open (NSE/BSE session · IST)";
+        } else {
+          marketBanner.className = "market-banner closed";
+          marketBanner.textContent = weekday
+            ? "⚪ Market closed · next session 9:15 IST"
+            : "⚪ Weekend · markets closed";
+        }
+      } catch (e) {
+        marketBanner.textContent = "";
+      }
+    }
+
+    function renderSourceChips() {
+      $("source-chips").innerHTML = FEEDS.map(function (f) {
+        const on = enabledSources.indexOf(f.id) !== -1;
+        const fail = feedOk[f.id] === false;
+        return '<span class="src-chip ' + (on ? "on" : "") + (fail ? " fail" : "") + '" data-id="' + f.id + '">' +
+          f.name + (fail ? " ✗" : "") + "</span>";
+      }).join("");
+      $("source-chips").querySelectorAll(".src-chip").forEach(function (el) {
+        el.addEventListener("click", function () {
+          const id = el.dataset.id;
+          if (enabledSources.indexOf(id) !== -1) {
+            if (enabledSources.length === 1) { showToast("Keep at least one source"); return; }
+            enabledSources = enabledSources.filter(function (x) { return x !== id; });
+          } else enabledSources.push(id);
+          localStorage.setItem(KEYS.sources, JSON.stringify(enabledSources));
+          renderSourceChips();
+          render(filterItems(allItems));
+          updateStats();
+        });
+      });
+    }
+
+    function renderWatchTags() {
+      $("watch-tags").innerHTML = watchlist.map(function (w, i) {
+        return '<span class="tag">' + escapeHtml(w) + ' <button data-i="' + i + '">×</button></span>';
+      }).join("");
+      $("watch-tags").querySelectorAll("button").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          watchlist.splice(+btn.dataset.i, 1);
+          localStorage.setItem(KEYS.watch, JSON.stringify(watchlist));
+          renderWatchTags();
+          render(filterItems(allItems));
+        });
+      });
+    }
+
+    async function fetchFeed(feed) {
+      const api = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feed.url);
+      const res = await fetch(api);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if (data.status !== "ok") throw new Error(data.message || "Feed error");
+      return (data.items || []).map(function (item) {
+        return {
+          id: item.guid || item.link || item.title,
+          title: item.title || "Untitled",
+          link: item.link || "#",
+          pubDate: item.pubDate,
+          source: feed.name,
+          sourceId: feed.id,
+          desc: stripHtml(item.description || "")
+        };
+      });
+    }
+
+    async function loadNews(isManual) {
+      if (isManual) $("btn-refresh").disabled = true;
+      setStatus("live", "Fetching…");
+      updateMarketBanner();
+
+      const active = FEEDS.filter(function (f) { return enabledSources.indexOf(f.id) !== -1; });
+      const results = await Promise.allSettled(active.map(fetchFeed));
+      let items = [];
+      feedOk = {};
+      active.forEach(function (f, i) {
+        if (results[i].status === "fulfilled") {
+          feedOk[f.id] = true;
+          items = items.concat(results[i].value);
+        } else {
+          feedOk[f.id] = false;
+          console.warn(f.name, results[i].reason);
+        }
+      });
+      FEEDS.forEach(function (f) { if (!(f.id in feedOk)) feedOk[f.id] = null; });
+      renderSourceChips();
+
+      const positive = [];
+      const batch = new Set();
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        const watchHit = watchlist.length && matchesWatch(it.title, it.desc);
+        const exchangeFiling = it.sourceId === "nse" || it.sourceId === "bse";
+        const txt = (it.title + " " + (it.desc || "")).toLowerCase();
+        const isIpoItem = it.sourceId === "ipo" || it.sourceId === "gnewsipo" || IPO_KEYWORDS.some(function (k) {
+          return txt.indexOf(k) !== -1;
+        });
+        const isWhaleItem = WHALE_KEYWORDS.some(function (k) { return txt.indexOf(k) !== -1; });
+        if (allNewsMode) {
+          if (NEGATIVE.some(function (k) { return txt.indexOf(k) !== -1; }) && !isPositive(it.title, it.desc)) continue;
+        } else if (!isPositive(it.title, it.desc) && !(watchHit && exchangeFiling) && !isIpoItem && !isWhaleItem) {
+          continue;
+        }
+        if (batch.has(it.id)) continue;
+        batch.add(it.id);
+        positive.push(it);
+      }
+      positive.sort(function (a, b) { return new Date(b.pubDate) - new Date(a.pubDate); });
+      allItems = positive.slice(0, MAX_ITEMS);
+
+      try {
+        localStorage.setItem(KEYS.cache, JSON.stringify({ ts: Date.now(), items: allItems }));
+      } catch (e) {}
+
+      const brandNew = allItems.filter(function (it) { return !seen.has(it.id); });
+      brandNew.forEach(function (it) { seen.add(it.id); });
+      if (brandNew.length) { saveSeen(); playBeep(); }
+
+      const filtered = filterItems(allItems);
+      render(filtered, brandNew);
+      updateStats();
+      countLabel.textContent = filtered.length + " shown · " + allItems.length + " positive · " + brandNew.length + " new";
+      lastUpdate.textContent = "· " + new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" }) + " IST";
+      cacheLabel.textContent = "";
+      setStatus("live", "Live");
+
+      if (brandNew.length && Notification.permission === "granted" && Date.now() > snoozeUntil) {
+        new Notification("📈 Positive stock news", {
+          body: brandNew[0].title.slice(0, 140),
+          icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>"
+        });
+      }
+
+      if (isManual) {
+        $("btn-refresh").disabled = false;
+        showToast(brandNew.length ? brandNew.length + " new positive alert(s)" : "No new positive items");
+      }
+      if (!Object.values(feedOk).some(function (v) { return v === true; })) setStatus("error", "All feeds failed");
+      scheduleCountdown();
+    }
+
+    function loadFromCache() {
+      try {
+        const raw = localStorage.getItem(KEYS.cache);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (!data.items || !data.items.length) return false;
+        allItems = data.items;
+        render(filterItems(allItems));
+        updateStats();
+        countLabel.textContent = allItems.length + " cached items";
+        cacheLabel.textContent = "Cached · " + new Date(data.ts).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" });
+        setStatus("", "Cached");
+        return true;
+      } catch (e) { return false; }
+    }
+
+    function filterItems(items) {
+      let list = items.filter(function (it) { return enabledSources.indexOf(it.sourceId) !== -1; });
+      list = list.filter(function (it) { return matchesWatch(it.title, it.desc); });
+
+      const hours = parseFloat($("time-range").value) || 0;
+      if (hours > 0) {
+        const cutoff = Date.now() - hours * 3600 * 1000;
+        list = list.filter(function (it) {
+          const t = new Date(it.pubDate).getTime();
+          return isNaN(t) || t >= cutoff;
+        });
+      }
+
+      if (newOnly) list = list.filter(function (it) { return !seen.has(it.id) || favs.has(it.id); });
+      // Note: after loadNews, new items are already added to seen. For "new only" we use a different approach:
+      // show items that were brand new in last load OR currently favorited - actually simpler: track last batch.
+      // Better: newOnly shows items published in last hour relative to filter, OR we keep "unseen" separately.
+      // For simplicity after mark-seen: newOnly means "favorited only" when combined with showFavsOnly.
+      if (showFavsOnly) list = list.filter(function (it) { return favs.has(it.id); });
+
+      const q = ($("search").value || "").trim().toLowerCase();
+      if (q) {
+        list = list.filter(function (it) {
+          return it.title.toLowerCase().indexOf(q) !== -1 ||
+            it.source.toLowerCase().indexOf(q) !== -1 ||
+            (it.desc || "").toLowerCase().indexOf(q) !== -1;
+        });
+      }
+      return list;
+    }
+
+    // Separate: keep lastNewIds for "new only" display across filters
+    let lastNewIds = new Set();
+
+    function filterItemsFull(items) {
+      let list = items.filter(function (it) { return enabledSources.indexOf(it.sourceId) !== -1; });
+      list = list.filter(function (it) { return matchesWatch(it.title, it.desc); });
+      const hours = parseFloat($("time-range").value) || 0;
+      if (hours > 0) {
+        const cutoff = Date.now() - hours * 3600 * 1000;
+        list = list.filter(function (it) {
+          const t = new Date(it.pubDate).getTime();
+          return isNaN(t) || t >= cutoff;
+        });
+      }
+      if (newOnly) list = list.filter(function (it) { return lastNewIds.has(it.id); });
+      if (showFavsOnly) list = list.filter(function (it) { return favs.has(it.id); });
+      if (quickFilter) {
+        const qf = quickFilter.toLowerCase();
+        list = list.filter(function (it) {
+          return (it.title + " " + (it.desc || "")).toLowerCase().indexOf(qf) !== -1;
+        });
+      }
+      if (ipoMode) {
+        list = list.filter(function (it) {
+          if (it.sourceId === "ipo" || it.sourceId === "gnewsipo") return true;
+          const t = (it.title + " " + (it.desc || "")).toLowerCase();
+          return IPO_KEYWORDS.some(function (k) { return t.indexOf(k) !== -1; });
+        });
+      }
+      if (whaleMode) {
+        list = list.filter(function (it) {
+          const t = (it.title + " " + (it.desc || "")).toLowerCase();
+          return WHALE_KEYWORDS.some(function (k) { return t.indexOf(k) !== -1; });
+        });
+      }
+      const q = ($("search").value || "").trim().toLowerCase();
+      if (q) {
+        list = list.filter(function (it) {
+          return it.title.toLowerCase().indexOf(q) !== -1 ||
+            it.source.toLowerCase().indexOf(q) !== -1 ||
+            (it.desc || "").toLowerCase().indexOf(q) !== -1;
+        });
+      }
+      if (sortBy === "oldest") {
+        list = list.slice().sort(function (a, b) { return new Date(a.pubDate) - new Date(b.pubDate); });
+      } else if (sortBy === "source") {
+        list = list.slice().sort(function (a, b) {
+          return a.source.localeCompare(b.source) || (new Date(b.pubDate) - new Date(a.pubDate));
+        });
+      } else {
+        list = list.slice().sort(function (a, b) { return new Date(b.pubDate) - new Date(a.pubDate); });
+      }
+      return list;
+    }
+
+    function updateStats() {
+      const counts = {};
+      filterItemsFull(allItems).forEach(function (it) {
+        counts[it.source] = (counts[it.source] || 0) + 1;
+      });
+      statsEl.innerHTML = Object.keys(counts).map(function (k) {
+        return '<span class="stat-pill">' + escapeHtml(k) + " " + counts[k] + "</span>";
+      }).join("");
+    }
+
+    function render(items, brandNewList) {
+      brandNewList = brandNewList || [];
+      if (brandNewList.length) {
+        brandNewList.forEach(function (it) { lastNewIds.add(it.id); });
+      }
+      const newIds = lastNewIds;
+      const q = ($("search").value || "").trim();
+
+      if (!items.length) {
+        var emptyHint = watchlist.length
+          ? "No positive news mentioning: " + watchlist.join(", ") + ". Try another name (e.g. Infosys not only INFY), widen time range, or clear the watchlist."
+          : "Widen time range, sources, or clear search.";
+        listEl.innerHTML = '<div class="empty"><h2>No matching positive news</h2><p>' + emptyHint + '</p></div>';
+        return;
+      }
+
+      listEl.innerHTML = items.map(function (it) {
+        const onWatch = watchlist.length && matchesWatch(it.title, it.desc);
+        const isFav = favs.has(it.id);
+        const isNew = newIds.has(it.id);
+        return '<article class="card' + (isNew ? " new" : "") + (isFav ? " fav" : "") + '">' +
+          '<div class="card-title"><a href="' + escapeAttr(it.link) + '" target="_blank" rel="noopener noreferrer">' +
+          highlight(it.title, q) + '</a></div>' +
+          (it.desc ? '<div class="card-desc">' + escapeHtml(it.desc.slice(0, 200)) + (it.desc.length > 200 ? "…" : "") + '</div>' : "") +
+          '<div class="card-meta">' +
+            (function(){
+              var t = (it.title + " " + (it.desc || "")).toLowerCase();
+              var isIpo = it.sourceId === "ipo" || it.sourceId === "gnewsipo" || IPO_KEYWORDS.some(function(k){ return t.indexOf(k)!==-1; });
+              var isWhale = WHALE_KEYWORDS.some(function(k){ return t.indexOf(k)!==-1; });
+              var isPos = isPositive(it.title, it.desc);
+              if (isIpo) return '<span class="badge" style="background:rgba(168,85,247,.15);color:#c084fc;">IPO</span>';
+              if (isWhale) return '<span class="badge" style="background:rgba(249,115,22,.15);color:#fb923c;">Whale</span>';
+              if (isPos) return '<span class="badge">Positive</span>';
+              return '<span class="badge" style="background:rgba(148,163,184,.15);color:#94a3b8;">News</span>';
+            })() +
+            (onWatch ? '<span class="badge watch">Watch</span>' : "") +
+            (isFav ? '<span class="badge fav-b">★</span>' : "") +
+            '<span>' + escapeHtml(it.source) + '</span>' +
+            '<span title="' + escapeAttr(formatIST(it.pubDate)) + '">' + timeAgo(it.pubDate) + '</span>' +
+            '<div class="card-actions">' +
+              '<button class="fav-btn" data-id="' + escapeAttr(it.id) + '" title="Favorite">' + (isFav ? "★" : "☆") + '</button>' +
+              '<button class="copy-btn" data-link="' + escapeAttr(it.link) + '">Copy</button>' +
+              '<button class="share-btn" data-title="' + escapeAttr(it.title) + '" data-link="' + escapeAttr(it.link) + '">Share</button>' +
+            '</div></div></article>';
+      }).join("");
+
+      listEl.querySelectorAll(".fav-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const id = btn.dataset.id;
+          if (favs.has(id)) favs.delete(id); else favs.add(id);
+          saveFavs();
+          render(filterItemsFull(allItems));
+          updateStats();
+        });
+      });
+      listEl.querySelectorAll(".copy-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          navigator.clipboard.writeText(btn.dataset.link).then(function () {
+            btn.textContent = "Copied!";
+            setTimeout(function () { btn.textContent = "Copy"; }, 1200);
+          }).catch(function () { showToast("Copy failed"); });
+        });
+      });
+      listEl.querySelectorAll(".share-btn").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+          const data = { title: btn.dataset.title, url: btn.dataset.link, text: btn.dataset.title };
+          if (navigator.share) {
+            try { await navigator.share(data); } catch (e) {}
+          } else {
+            navigator.clipboard.writeText(btn.dataset.link).then(function () { showToast("Link copied"); });
+          }
+        });
+      });
+      listEl.querySelectorAll(".card-desc").forEach(function (el) {
+        el.addEventListener("click", function () { el.classList.toggle("expanded"); });
+      });
+    }
+
+    function renderQuickFilters() {
+      const chips = ["", "surge", "rally", "upper circuit", "profit", "dividend", "order", "bags", "secured", "upgrade", "buyback", "deal", "ipo", "bulk deal", "fii", "in focus"];
+      const labels = ["All", "Surge", "Rally", "UC", "Profit", "Div", "Order", "Bags", "Secured", "Upgrade", "Buyback", "Deal", "IPO", "Bulk", "FII", "Focus"];
+      const box = $("quick-filters");
+      if (!box) return;
+      box.innerHTML = chips.map(function (c, i) {
+        const on = quickFilter === c ? " on" : "";
+        return '<span class="qchip' + on + '" data-q="' + c + '">' + labels[i] + '</span>';
+      }).join("");
+      box.querySelectorAll(".qchip").forEach(function (el) {
+        el.addEventListener("click", function () {
+          quickFilter = el.dataset.q;
+          renderQuickFilters();
+          render(filterItemsFull(allItems));
+          updateStats();
+          countLabel.textContent = filterItemsFull(allItems).length + " shown";
+        });
+      });
+    }
+
+    function applyFont() {
+      document.body.classList.remove("fs-sm", "fs-lg", "fs-xl");
+      if (fontStep === 0) document.body.classList.add("fs-sm");
+      if (fontStep === 2) document.body.classList.add("fs-lg");
+      if (fontStep === 3) document.body.classList.add("fs-xl");
+      localStorage.setItem("nba_font", String(fontStep));
+    }
+
+    function updateSnoozeBtn() {
+      const btn = $("btn-snooze");
+      if (!btn) return;
+      if (Date.now() < snoozeUntil) {
+        const m = Math.ceil((snoozeUntil - Date.now()) / 60000);
+        btn.textContent = "Snooze " + m + "m";
+        btn.classList.add("snooze-active", "active");
+      } else {
+        btn.textContent = "Snooze";
+        btn.classList.remove("snooze-active", "active");
+      }
+    }
+
+    function exportNews(fmt) {
+      const items = filterItemsFull(allItems);
+      if (!items.length) { showToast("Nothing to export"); return; }
+      if (fmt === "json") {
+        const blob = new Blob([JSON.stringify(items, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "positive-news-" + new Date().toISOString().slice(0, 10) + ".json";
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast("JSON downloaded");
+        return;
+      }
+      const rows = [["Title", "Source", "Date", "Link"]];
+      items.forEach(function (it) { rows.push([it.title, it.source, it.pubDate || "", it.link]); });
+      const csv = rows.map(function (r) {
+        return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(",");
+      }).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "positive-news-" + new Date().toISOString().slice(0, 10) + ".csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast("CSV downloaded");
+    }
+
+    function exportSettings() {
+      const data = {
+        watchlist: watchlist, customPos: customPos, enabledSources: enabledSources,
+        favs: Array.from(favs), interval: $("interval").value
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "nba-settings.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast("Settings exported");
+    }
+
+    function importSettings(file) {
+      const reader = new FileReader();
+      reader.onload = function () {
+        try {
+          const data = JSON.parse(reader.result);
+          if (data.watchlist) {
+            watchlist = data.watchlist;
+            localStorage.setItem(KEYS.watch, JSON.stringify(watchlist));
+          }
+          if (data.customPos) {
+            customPos = data.customPos;
+            localStorage.setItem(KEYS.customPos, customPos.join(", "));
+            $("custom-pos").value = customPos.join(", ");
+          }
+          if (data.enabledSources) {
+            enabledSources = data.enabledSources;
+            localStorage.setItem(KEYS.sources, JSON.stringify(enabledSources));
+          }
+          if (data.favs) {
+            favs = new Set(data.favs);
+            saveFavs();
+          }
+          if (data.interval) {
+            $("interval").value = data.interval;
+            localStorage.setItem(KEYS.interval, data.interval);
+            setupTimer();
+          }
+          renderSourceChips();
+          renderWatchTags();
+          render(filterItemsFull(allItems));
+          showToast("Settings imported");
+        } catch (e) { showToast("Invalid settings file"); }
+      };
+      reader.readAsText(file);
+    }
+
+    function setupTimer() {
+      if (timer) clearInterval(timer);
+      if (countdownTimer) clearInterval(countdownTimer);
+      const mins = parseFloat($("interval").value);
+      localStorage.setItem(KEYS.interval, $("interval").value);
+      if (mins > 0) {
+        nextRefreshAt = Date.now() + mins * 60 * 1000;
+        timer = setInterval(function () { loadNews(false); }, mins * 60 * 1000);
+        countdownTimer = setInterval(updateCountdown, 1000);
+        updateCountdown();
+      } else {
+        nextRefreshEl.textContent = "";
+      }
+    }
+
+    function scheduleCountdown() {
+      const mins = parseFloat($("interval").value);
+      if (mins > 0) nextRefreshAt = Date.now() + mins * 60 * 1000;
+    }
+
+    function updateCountdown() {
+      if (!nextRefreshAt) { nextRefreshEl.textContent = ""; return; }
+      const sec = Math.max(0, Math.floor((nextRefreshAt - Date.now()) / 1000));
+      if (sec <= 0) { nextRefreshEl.textContent = "· refreshing…"; return; }
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      nextRefreshEl.textContent = "· next " + (m ? m + "m " : "") + s + "s";
+    }
+
+    // Events
+    $("btn-refresh").addEventListener("click", function () { loadNews(true); });
+    $("btn-clear").addEventListener("click", function () {
+      seen.clear(); lastNewIds.clear();
+      localStorage.removeItem(KEYS.seen);
+      showToast("Seen history cleared");
+      loadNews(true);
+    });
+    $("btn-export").addEventListener("click", function () {
+      const choice = confirm("OK = CSV, Cancel = JSON");
+      exportNews(choice ? "csv" : "json");
+    });
+    $("interval").addEventListener("change", setupTimer);
+    $("time-range").addEventListener("change", function () {
+      localStorage.setItem(KEYS.timeRange, $("time-range").value);
+      render(filterItemsFull(allItems));
+      updateStats();
+      countLabel.textContent = filterItemsFull(allItems).length + " shown";
+    });
+    $("search").addEventListener("input", function () {
+      render(filterItemsFull(allItems));
+      updateStats();
+    });
+
+    $("btn-notify").addEventListener("click", async function () {
+      if (!("Notification" in window)) { showToast("Not supported"); return; }
+      const p = await Notification.requestPermission();
+      if (p === "granted") {
+        showToast("Notifications on");
+        $("btn-notify").textContent = "Notify On";
+        $("btn-notify").classList.add("active");
+      } else showToast("Permission denied");
+    });
+
+    $("btn-sound").addEventListener("click", function () {
+      soundOn = !soundOn;
+      localStorage.setItem(KEYS.sound, soundOn ? "1" : "0");
+      $("btn-sound").textContent = soundOn ? "Sound On" : "Sound Off";
+      $("btn-sound").classList.toggle("active", soundOn);
+      if (soundOn) playBeep();
+      showToast(soundOn ? "Sound enabled" : "Sound off");
+    });
+
+    $("btn-newonly").addEventListener("click", function () {
+      newOnly = !newOnly;
+      localStorage.setItem(KEYS.newOnly, newOnly ? "1" : "0");
+      $("btn-newonly").classList.toggle("active", newOnly);
+      $("btn-newonly").textContent = newOnly ? "New only ✓" : "New only";
+      render(filterItemsFull(allItems));
+      updateStats();
+    });
+
+    $("btn-compact").addEventListener("click", function () {
+      compact = !compact;
+      localStorage.setItem(KEYS.compact, compact ? "1" : "0");
+      document.body.classList.toggle("compact", compact);
+      $("btn-compact").classList.toggle("active", compact);
+    });
+
+    $("btn-show-favs").addEventListener("click", function () {
+      showFavsOnly = !showFavsOnly;
+      $("btn-show-favs").textContent = showFavsOnly ? "Show all" : "Show favorites only";
+      $("btn-show-favs").classList.toggle("active", showFavsOnly);
+      render(filterItemsFull(allItems));
+      updateStats();
+    });
+
+    $("btn-watch-add").addEventListener("click", addWatch);
+    $("watch-input").addEventListener("keydown", function (e) { if (e.key === "Enter") addWatch(); });
+
+    function addWatch() {
+      const raw = $("watch-input").value.trim();
+      if (!raw) return;
+      const parts = raw.split(/[,;|]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+      let added = 0;
+      parts.forEach(function (v) {
+        if (watchlist.map(function (x) { return x.toLowerCase(); }).indexOf(v.toLowerCase()) === -1) {
+          watchlist.push(v);
+          added++;
+        }
+      });
+      localStorage.setItem(KEYS.watch, JSON.stringify(watchlist));
+      $("watch-input").value = "";
+      renderWatchTags();
+      render(filterItemsFull(allItems));
+      showToast(added ? ("Watching " + parts.slice(0,3).join(", ") + (parts.length>3?"…":"") + " — only news mentioning these will show") : "Already in watchlist");
+    }
+
+    $("btn-save-kw").addEventListener("click", function () {
+      customPos = $("custom-pos").value.split(",").map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
+      localStorage.setItem(KEYS.customPos, customPos.join(", "));
+      showToast("Keywords saved");
+      loadNews(true);
+    });
+
+    $("btn-settings-exp").addEventListener("click", exportSettings);
+    $("btn-settings-imp").addEventListener("click", function () { $("import-file").click(); });
+    $("import-file").addEventListener("change", function (e) {
+      if (e.target.files[0]) importSettings(e.target.files[0]);
+      e.target.value = "";
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.target.matches("input, textarea, select")) return;
+      if (e.key === "r" || e.key === "R") loadNews(true);
+      if (e.key === "/") { e.preventDefault(); $("search").focus(); }
+    });
+
+    window.addEventListener("scroll", function () {
+      fabTop.classList.toggle("show", window.scrollY > 400);
+    });
+    fabTop.addEventListener("click", function () {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+
+    // IPO mode
+    if ($("btn-ipo")) {
+      $("btn-ipo").addEventListener("click", function () {
+        ipoMode = !ipoMode;
+        $("btn-ipo").classList.toggle("active", ipoMode);
+        $("btn-ipo").textContent = ipoMode ? "IPOs ✓" : "IPOs";
+        // Ensure IPO source is enabled when turning on
+        if (ipoMode) {
+          var changed = false;
+          ["ipo", "gnewsipo"].forEach(function (id) {
+            if (enabledSources.indexOf(id) === -1) { enabledSources.push(id); changed = true; }
+          });
+          if (changed) {
+            localStorage.setItem(KEYS.sources, JSON.stringify(enabledSources));
+            renderSourceChips();
+            loadNews(true);
+          } else {
+            render(filterItemsFull(allItems));
+            updateStats();
+            countLabel.textContent = filterItemsFull(allItems).length + " shown";
+          }
+        } else {
+          render(filterItemsFull(allItems));
+          updateStats();
+          countLabel.textContent = filterItemsFull(allItems).length + " shown";
+        }
+        showToast(ipoMode ? "IPO mode on — showing IPO/FPO news" : "IPO mode off");
+      });
+    }
+
+    // All news vs positive-only
+    if ($("btn-allnews")) {
+      $("btn-allnews").addEventListener("click", function () {
+        allNewsMode = !allNewsMode;
+        $("btn-allnews").classList.toggle("active", allNewsMode);
+        $("btn-allnews").textContent = allNewsMode ? "All news ✓" : "Positive only";
+        loadNews(true);
+        showToast(allNewsMode ? "All market news on" : "Positive-only filter on");
+      });
+    }
+
+    // Whale / large trades mode
+    if ($("btn-whale")) {
+      $("btn-whale").addEventListener("click", function () {
+        whaleMode = !whaleMode;
+        $("btn-whale").classList.toggle("active", whaleMode);
+        $("btn-whale").textContent = whaleMode ? "Whales ✓" : "Whales";
+        render(filterItemsFull(allItems));
+        updateStats();
+        countLabel.textContent = filterItemsFull(allItems).length + " shown";
+        showToast(whaleMode
+          ? "Whale mode — bulk/block deals, FII/DII, stake sales"
+          : "Whale mode off");
+      });
+    }
+
+    // X (Twitter) search — X has no free public RSS in 2026
+    if ($("btn-xsearch")) {
+      $("btn-xsearch").addEventListener("click", function () {
+        var q = "NSE OR BSE OR Nifty (surge OR rally OR IPO OR profit)";
+        if (watchlist.length) q = watchlist.slice(0, 3).join(" OR ") + " (stock OR IPO OR NSE)";
+        var url = "https://x.com/search?q=" + encodeURIComponent(q) + "&f=live";
+        window.open(url, "_blank", "noopener");
+        showToast("Opened live search on X");
+      });
+    }
+
+    // Sort
+    if ($("sort-by")) {
+      $("sort-by").value = sortBy;
+      $("sort-by").addEventListener("change", function () {
+        sortBy = $("sort-by").value;
+        localStorage.setItem("nba_sort", sortBy);
+        render(filterItemsFull(allItems));
+        updateStats();
+      });
+    }
+
+    // Focus mode
+    if ($("btn-focus")) {
+      $("btn-focus").addEventListener("click", function () {
+        document.body.classList.toggle("focus-mode");
+        const on = document.body.classList.contains("focus-mode");
+        $("btn-focus").classList.toggle("active", on);
+        $("btn-focus").textContent = on ? "Exit focus" : "Focus";
+        showToast(on ? "Focus mode on — press Focus to exit" : "Focus mode off");
+      });
+    }
+
+    // Font size cycle
+    if ($("btn-fontsize")) {
+      applyFont();
+      $("btn-fontsize").addEventListener("click", function () {
+        fontStep = (fontStep + 1) % 4;
+        applyFont();
+        const labels = ["Small", "Normal", "Large", "XL"];
+        showToast("Font: " + labels[fontStep]);
+      });
+    }
+
+    // Snooze 30 min cycle
+    if ($("btn-snooze")) {
+      updateSnoozeBtn();
+      setInterval(updateSnoozeBtn, 30000);
+      $("btn-snooze").addEventListener("click", function () {
+        if (Date.now() < snoozeUntil) {
+          snoozeUntil = 0;
+          localStorage.setItem("nba_snooze", "0");
+          showToast("Snooze cleared");
+        } else {
+          snoozeUntil = Date.now() + 30 * 60 * 1000;
+          localStorage.setItem("nba_snooze", String(snoozeUntil));
+          showToast("Notifications snoozed 30 min");
+        }
+        updateSnoozeBtn();
+      });
+    }
+
+    // Open all new
+    if ($("btn-opennew")) {
+      $("btn-opennew").addEventListener("click", function () {
+        const items = filterItemsFull(allItems).filter(function (it) { return lastNewIds.has(it.id); });
+        if (!items.length) { showToast("No new items to open"); return; }
+        const n = Math.min(items.length, 8);
+        if (!confirm("Open " + n + " new link(s) in new tabs?")) return;
+        for (let i = 0; i < n; i++) window.open(items[i].link, "_blank", "noopener");
+        showToast("Opened " + n + " tab(s)");
+      });
+    }
+
+    // Clear favorites
+    if ($("btn-clear-favs")) {
+      $("btn-clear-favs").addEventListener("click", function () {
+        if (!favs.size) { showToast("No favorites"); return; }
+        if (!confirm("Clear all " + favs.size + " favorites?")) return;
+        favs.clear();
+        saveFavs();
+        showFavsOnly = false;
+        render(filterItemsFull(allItems));
+        updateStats();
+        showToast("Favorites cleared");
+      });
+    }
+
+    // Init
+    const savedInterval = localStorage.getItem(KEYS.interval);
+    if (savedInterval) $("interval").value = savedInterval;
+    const savedRange = localStorage.getItem(KEYS.timeRange);
+    if (savedRange) $("time-range").value = savedRange;
+    $("custom-pos").value = customPos.join(", ");
+    if (Notification.permission === "granted") {
+      $("btn-notify").textContent = "Notify On";
+      $("btn-notify").classList.add("active");
+    }
+    if (soundOn) {
+      $("btn-sound").textContent = "Sound On";
+      $("btn-sound").classList.add("active");
+    }
+    if (compact) {
+      document.body.classList.add("compact");
+      $("btn-compact").classList.add("active");
+    }
+    if (newOnly) {
+      $("btn-newonly").classList.add("active");
+      $("btn-newonly").textContent = "New only ✓";
+    }
+
+    // Fix loadNews to set lastNewIds properly
+    const _loadNews = loadNews;
+    loadNews = async function (isManual) {
+      if (isManual) $("btn-refresh").disabled = true;
+      setStatus("live", "Fetching…");
+      updateMarketBanner();
+      const active = FEEDS.filter(function (f) { return enabledSources.indexOf(f.id) !== -1; });
+      const results = await Promise.allSettled(active.map(fetchFeed));
+      let items = [];
+      feedOk = {};
+      active.forEach(function (f, i) {
+        if (results[i].status === "fulfilled") {
+          feedOk[f.id] = true;
+          items = items.concat(results[i].value);
+        } else feedOk[f.id] = false;
+      });
+      FEEDS.forEach(function (f) { if (!(f.id in feedOk)) feedOk[f.id] = null; });
+      renderSourceChips();
+
+      const positive = [];
+      const batch = new Set();
+      items.forEach(function (it) {
+        // Keep if positive keywords, OR if watchlist matches an NSE/BSE filing
+        const watchHit = watchlist.length && matchesWatch(it.title, it.desc);
+        const exchangeFiling = it.sourceId === "nse" || it.sourceId === "bse";
+        const txt = (it.title + " " + (it.desc || "")).toLowerCase();
+        const isIpoItem = it.sourceId === "ipo" || it.sourceId === "gnewsipo" || IPO_KEYWORDS.some(function (k) {
+          return txt.indexOf(k) !== -1;
+        });
+        const isWhaleItem = WHALE_KEYWORDS.some(function (k) { return txt.indexOf(k) !== -1; });
+        if (allNewsMode) {
+          if (NEGATIVE.some(function (k) { return txt.indexOf(k) !== -1; }) && !isPositive(it.title, it.desc)) return;
+        } else if (!isPositive(it.title, it.desc) && !(watchHit && exchangeFiling) && !isIpoItem && !isWhaleItem) {
+          return;
+        }
+        if (batch.has(it.id)) return;
+        batch.add(it.id);
+        positive.push(it);
+      });
+      positive.sort(function (a, b) { return new Date(b.pubDate) - new Date(a.pubDate); });
+      allItems = positive.slice(0, MAX_ITEMS);
+
+      try { localStorage.setItem(KEYS.cache, JSON.stringify({ ts: Date.now(), items: allItems })); } catch (e) {}
+
+      const brandNew = allItems.filter(function (it) { return !seen.has(it.id); });
+      lastNewIds = new Set(brandNew.map(function (it) { return it.id; }));
+      brandNew.forEach(function (it) { seen.add(it.id); });
+      if (brandNew.length) { saveSeen(); playBeep(); }
+
+      const filtered = filterItemsFull(allItems);
+      render(filtered, brandNew);
+      updateStats();
+      countLabel.textContent = filtered.length + " shown · " + allItems.length + " positive · " + brandNew.length + " new";
+      lastUpdate.textContent = "· " + new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" }) + " IST";
+      cacheLabel.textContent = "";
+      setStatus("live", "Live");
+
+      if (brandNew.length && Notification.permission === "granted" && Date.now() > snoozeUntil) {
+        new Notification("📈 Positive stock news", {
+          body: brandNew[0].title.slice(0, 140),
+          icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>"
+        });
+      }
+      if (isManual) {
+        $("btn-refresh").disabled = false;
+        showToast(brandNew.length ? brandNew.length + " new positive alert(s)" : "No new positive items");
+      }
+      if (!Object.values(feedOk).some(function (v) { return v === true; })) setStatus("error", "All feeds failed");
+      scheduleCountdown();
+    };
+
+    renderSourceChips();
+    renderWatchTags();
+    renderQuickFilters();
+    updateMarketBanner();
+    setInterval(updateMarketBanner, 60000);
+    loadFromCache();
+    loadNews(false);
+    setupTimer();
+  })();
+  </script>
+</body>
+</html>
